@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AbsoluteLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:id="@+id/textview"
+        android:layout_width="300dp"
+        android:layout_height="50dp"
+        android:layout_x="57dp"
+        android:layout_y="65dp"
+        android:text="Hello World!"
+        android:textSize="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/button"
+        android:layout_width="149dp"
+        android:layout_height="65dp"
+        android:layout_x="108dp"
+        android:layout_y="171dp"
+        android:text="Send"
+        android:textSize="20dp"
+        android:onClick="onClick"
+        tools:layout_editor_absoluteX="111dp"
+        tools:layout_editor_absoluteY="191dp" />
+
+</AbsoluteLayout>
