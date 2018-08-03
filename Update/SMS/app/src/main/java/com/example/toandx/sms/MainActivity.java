@@ -31,19 +31,49 @@ public class MainActivity extends AppCompatActivity {
     private IncomingSms SMS;
     private BroadcastReceiver nhan;
     private ListView list;
+    private CustomListAdapter adapter;
     //private SimpleCursorAdapter adapter;
     ArrayList<String> name;
     ArrayList<String> info;
     Uri inboxURI;
     String[] reqCols;
     Cursor c;
-    String numphone;
+    String numphone,body;
+    private Bundle data;
+    private Message message;
+    private Handler handler;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         name=new ArrayList<String>();
         info=new ArrayList<String>();
+        list=(ListView) findViewById(R.id.listview);
+        handler=new Handler()
+        {
+            @Override
+            public void handleMessage(Message msg)
+            {
+                if (msg.getData()!=null) {
+                    numphone = msg.getData().getString("name");
+                    body=msg.getData().getString("info");
+                    Cursor phone = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                            null, ContactsContract.CommonDataKinds.Phone.DATA + "='" + numphone + "'",
+                            null, null);
+                    if (phone.moveToFirst()) {
+                        String id = phone.getString(phone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID));
+                        Cursor phonect = getContentResolver().query(ContactsContract.Contacts.CONTENT_URI,
+                                null, ContactsContract.Contacts._ID + "=" + id, null, null);
+                        if (phonect.moveToFirst()) {
+                            String s = phonect.getString(phonect.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+                            numphone = numphone + "(" + s + ")";
+                        }
+                    }
+                    info.add(msg.getData().getString("info"));
+                    name.add(numphone);
+                }
+            }
+        };
         inboxURI = Uri.parse("content://sms/inbox");
         // List required columns
         reqCols = new String[] {"_id","address", "body" };
@@ -53,33 +83,26 @@ public class MainActivity extends AppCompatActivity {
 
         // Fetch Inbox SMS Message from Built-in Content Provider
         c = cr.query(inboxURI, reqCols, null, null, null);
-        list=(ListView) findViewById(R.id.listview);
-        if (c.moveToFirst())
-        {
-            do {
-                info.add(c.getString(c.getColumnIndex("body")));
-                numphone=c.getString(c.getColumnIndex("address"));
-                Cursor phone=getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                        null,ContactsContract.CommonDataKinds.Phone.DATA+"='"+numphone+"'",
-                        null,null);
-                if (phone.moveToFirst()) {
-                    String id = phone.getString(phone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID));
-                    Cursor phonect=getContentResolver().query(ContactsContract.Contacts.CONTENT_URI,
-                            null,ContactsContract.Contacts._ID+"="+id,null,null);
-                    if (phonect.moveToFirst())
-                    {
-                        String s=phonect.getString(phonect.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-                        numphone=numphone+"("+s+")";
-                    }
-                }
-                name.add(numphone);
-
-            } while (c.moveToNext());
-        }
-        CustomListAdapter adapter=new CustomListAdapter(this,name,info);
+        adapter=new CustomListAdapter(this,name,info);
         //adapter=new SimpleCursorAdapter(this,R.layout.listview,c,new String[] {"address","body"},
-          //      new int[]{R.id.nameTextViewID,R.id.infoTextViewID});
+        //      new int[]{R.id.nameTextViewID,R.id.infoTextViewID});
         list.setAdapter(adapter);
+        Runnable run1=new Runnable() {
+            @Override
+            public void run() {
+                if (c.moveToFirst())
+                {
+                    do {
+                        data=new Bundle();
+                        data.putString("info",c.getString(c.getColumnIndex("body")));
+                        data.putString("name",c.getString(c.getColumnIndex("address")));
+                        message=new Message();
+                        message.setData(data);
+                        handler.sendMessage(message);
+                    } while (c.moveToNext());
+                }
+            }
+        };
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
@@ -90,14 +113,6 @@ public class MainActivity extends AppCompatActivity {
         nhan=new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                //String s1=intent.getStringExtra("NUM");
-                //String s2=intent.getStringExtra("MSG");
-                /*if (s1!=null && s2!=null)
-                {
-                    //name.add("Nhan:"+s1);
-                    //info.add(s2);
-                    list.invalidateViews();
-                }*/
                 c = getContentResolver().query(inboxURI, reqCols, null, null, null);
                 if (c.moveToLast())
                 {
@@ -121,6 +136,7 @@ public class MainActivity extends AppCompatActivity {
                 list.invalidateViews();
             }
         };
+        new Thread(run1).start();
 
 
     }
@@ -147,12 +163,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         list.invalidateViews();
-        /*if(resultCode == Activity.RESULT_OK && requestCode==1){
-            name.add("Gui:"+data.getStringExtra("NUM"));
-            info.add(data.getStringExtra("MSG"));
-            list.invalidateViews();
-
-        }*/
 
     }
 }
