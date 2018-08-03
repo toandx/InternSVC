@@ -1,6 +1,7 @@
 package com.example.toandx.sms;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -55,22 +56,10 @@ public class MainActivity extends AppCompatActivity {
             public void handleMessage(Message msg)
             {
                 if (msg.getData()!=null) {
-                    numphone = msg.getData().getString("name");
-                    body=msg.getData().getString("info");
-                    Cursor phone = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                            null, ContactsContract.CommonDataKinds.Phone.DATA + "='" + numphone + "'",
-                            null, null);
-                    if (phone.moveToFirst()) {
-                        String id = phone.getString(phone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID));
-                        Cursor phonect = getContentResolver().query(ContactsContract.Contacts.CONTENT_URI,
-                                null, ContactsContract.Contacts._ID + "=" + id, null, null);
-                        if (phonect.moveToFirst()) {
-                            String s = phonect.getString(phonect.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-                            numphone = numphone + "(" + s + ")";
-                        }
-                    }
                     info.add(msg.getData().getString("info"));
-                    name.add(numphone);
+                    name.add(msg.getData().getString("name"));
+                    adapter.notifyDataSetChanged();
+                    list.invalidateViews();
                 }
             }
         };
@@ -93,12 +82,36 @@ public class MainActivity extends AppCompatActivity {
                 if (c.moveToFirst())
                 {
                     do {
+                        numphone=c.getString(c.getColumnIndex("address"));
+                        Cursor phone = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                                null, ContactsContract.CommonDataKinds.Phone.DATA + "='" + numphone + "'",
+                                null, null);
+                        if (phone.moveToFirst()) {
+                            String id = phone.getString(phone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID));
+                            Cursor phonect = getContentResolver().query(ContactsContract.Contacts.CONTENT_URI,
+                                    null, ContactsContract.Contacts._ID + "=" + id, null, null);
+                            if (phonect.moveToFirst()) {
+                                String s = phonect.getString(phonect.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+                                numphone = numphone + "(" + s + ")";
+                            }
+                        }
+                        //final String abc=numphone;
+                        //final String ten1=c.getString(c.getColumnIndex("body"));
                         data=new Bundle();
                         data.putString("info",c.getString(c.getColumnIndex("body")));
-                        data.putString("name",c.getString(c.getColumnIndex("address")));
+                        data.putString("name",numphone);
                         message=new Message();
                         message.setData(data);
                         handler.sendMessage(message);
+                        /*list.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                name.add(abc);
+                                info.add(ten1);
+                                adapter.notifyDataSetChanged();
+                                list.invalidateViews();
+                            }
+                        });*/
                     } while (c.moveToNext());
                 }
             }
@@ -113,13 +126,11 @@ public class MainActivity extends AppCompatActivity {
         nhan=new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                c = getContentResolver().query(inboxURI, reqCols, null, null, null);
-                if (c.moveToLast())
-                {
-                    info.add(c.getString(c.getColumnIndex("body")));
-                    numphone=c.getString(c.getColumnIndex("address"));
+                String s1=intent.getStringExtra("NUM");
+                String s2=intent.getStringExtra("MSG");
+                Log.d("LOG","Da nhan");
                     Cursor phone=getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                            null,ContactsContract.CommonDataKinds.Phone.DATA+"='"+numphone+"'",
+                            null,ContactsContract.CommonDataKinds.Phone.DATA+"='"+s1+"'",
                             null,null);
                     if (phone.moveToFirst()) {
                         String id = phone.getString(phone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID));
@@ -128,12 +139,15 @@ public class MainActivity extends AppCompatActivity {
                         if (phonect.moveToFirst())
                         {
                             String s=phonect.getString(phonect.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-                            numphone=numphone+"("+s+")";
+                            s1=s1+"("+s+")";
                         }
                     }
-                    name.add(numphone);
-                }
+                    name.add(0,s1);
+                    info.add(0,s2);
+                    Log.d("LOG","Da thuc hien xong");
+                adapter.notifyDataSetChanged();
                 list.invalidateViews();
+                Log.d("LOG","Da OK");
             }
         };
         new Thread(run1).start();
