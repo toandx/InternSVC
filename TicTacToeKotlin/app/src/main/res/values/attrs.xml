@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="PlayBoard">
+        <attr name="xColor" format="color"></attr>
+        <attr name="oColor" format="color"></attr>
+        <attr name="color" format="color"></attr>
+        <attr name="strokeWidth" format="float"></attr>
+        <attr name="numCol" format="integer"></attr>
+        <attr name="signToWin" format="integer"></attr>
+        <attr name="pad" format="float"></attr>
+    </declare-styleable>
+</resources>
